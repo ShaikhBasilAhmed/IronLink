@@ -1,0 +1,36 @@
+# systemd unit for a bare-metal / VM deployment.
+# Install to /etc/systemd/system/ironlink.service, then:
+#   systemctl daemon-reload && systemctl enable --now ironlink
+[Unit]
+Description=IronLink SSL pin distribution service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ironlink
+Group=ironlink
+WorkingDirectory=/opt/ironlink
+# Secrets live in an EnvironmentFile with 0600 perms owned by the ironlink user.
+EnvironmentFile=/etc/ironlink/ironlink.env
+# If TLS_CERT_FILE/TLS_KEY_FILE are set in that env file, the private key must be
+# readable by the `ironlink` user: chown ironlink:ironlink /etc/ironlink/tls/privkey.pem
+# && chmod 400. ProtectSystem=strict below only blocks WRITES outside WorkingDirectory
+# and ReadWritePaths — it does not block reading the cert/key.
+ExecStart=/opt/ironlink/.venv/bin/gunicorn -c /opt/ironlink/gunicorn.conf.py app.main:app
+Restart=on-failure
+RestartSec=3
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ironlink/prometheus_multiproc
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
