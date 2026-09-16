@@ -147,11 +147,6 @@ vault kv patch -mount=secops ironlink cert=@cert.crt
 vault kv patch -mount=secops ironlink ssl-signing-key=@signing_key.pem
 ```
 
-> There is no `pinSetVersion` in the response — version-based rollback protection
-> for this payload is intentionally out of scope here (handled by other means).
-> `android` and `ios` are always derived from the same single `cert` and returned
-> together in **one** signed response.
->
 > ⚠️ **There is no old/new certificate pair.** Only the currently active
 > certificate is ever pinned — there is no in-payload overlap window during a
 > rotation. See §9 for what this means operationally and §11–§12 for the required
